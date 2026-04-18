@@ -1,6 +1,7 @@
 package site.irhas.ovcf
 
 import android.app.Activity
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
@@ -10,22 +11,27 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -33,17 +39,23 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -51,6 +63,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,6 +76,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import kotlinx.coroutines.launch
 import site.irhas.ovcf.ui.theme.OVCFTheme
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -196,6 +210,8 @@ fun ContactItem(
 @Composable
 fun VcfEditorApp(initialUri: Uri? = null) {
     val context = LocalContext.current
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
     var vcfContent by remember { mutableStateOf("") }
     var contacts by remember { mutableStateOf<List<Contact>>(emptyList()) }
     var fileName by remember { mutableStateOf<String?>(null) }
@@ -329,156 +345,226 @@ fun VcfEditorApp(initialUri: Uri? = null) {
         )
     }
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        topBar = {
-            if (contacts.isNotEmpty()) {
+    val appVersion = try {
+        val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+        packageInfo.versionName ?: "Unknown"
+    } catch (e: Exception) {
+        "Unknown"
+    }
+
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet(
+                modifier = Modifier.width(304.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .padding(bottom = 16.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                    )
+                    
+                    NavigationDrawerItem(
+                        label = { Text("Privacy policy") },
+                        selected = false,
+                        onClick = {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://irhas.site/app/ovfc#privacy"))
+                            context.startActivity(intent)
+                            scope.launch { drawerState.close() }
+                        },
+                        badge = {
+                            Icon(
+                                Icons.AutoMirrored.Filled.OpenInNew,
+                                contentDescription = null,
+                                modifier = Modifier.padding(end = 8.dp)
+                            )
+                        },
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                    )
+                    
+                    Spacer(modifier = Modifier.weight(1f))
+                    
+                    Text(
+                        text = "Version $appVersion",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+    ) {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            topBar = {
                 TopAppBar(
                     title = {
-                        if (selectionMode) {
-                            Text(text = "${selectedContacts.size} Selected")
-                        } else {
-                            Column {
-                                Text(
-                                    text = "${contacts.size} Contacts",
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                                fileName?.let {
+                        if (contacts.isNotEmpty()) {
+                            if (selectionMode) {
+                                Text(text = "${selectedContacts.size} Selected")
+                            } else {
+                                Column {
                                     Text(
-                                        text = it,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
+                                        text = "${contacts.size} Contacts",
+                                        style = MaterialTheme.typography.titleMedium
                                     )
+                                    fileName?.let {
+                                        Text(
+                                            text = it,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
                                 }
+                            }
+                        } else {
+                            Text("OVCF")
+                        }
+                    },
+                    navigationIcon = {
+                        if (contacts.isEmpty()) {
+                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                Icon(Icons.Default.Menu, contentDescription = "Menu")
                             }
                         }
                     },
                     actions = {
-                        if (selectionMode) {
-                            TextButton(onClick = {
-                                selectedContacts = if (isAllSelected) {
-                                    selectedContacts - displayList.toSet()
-                                } else {
-                                    selectedContacts + displayList.toSet()
+                        if (contacts.isNotEmpty()) {
+                            if (selectionMode) {
+                                TextButton(onClick = {
+                                    selectedContacts = if (isAllSelected) {
+                                        selectedContacts - displayList.toSet()
+                                    } else {
+                                        selectedContacts + displayList.toSet()
+                                    }
+                                }) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text("Select all", modifier = Modifier.padding(end = 8.dp))
+                                        Checkbox(
+                                            checked = isAllSelected,
+                                            onCheckedChange = null
+                                        )
+                                    }
                                 }
-                            }) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text("Select all", modifier = Modifier.padding(end = 8.dp))
-                                    Checkbox(
-                                        checked = isAllSelected,
-                                        onCheckedChange = null
-                                    )
+                            } else {
+                                IconButton(onClick = { showResetDialog = true }) {
+                                    Icon(Icons.Default.Refresh, contentDescription = "Reset")
                                 }
-                            }
-                        } else {
-                            IconButton(onClick = { showResetDialog = true }) {
-                                Icon(Icons.Default.Refresh, contentDescription = "Reset")
                             }
                         }
                     }
                 )
-            }
-        },
-        floatingActionButton = {
-            if (contacts.isEmpty()) {
-                FloatingActionButton(
-                    onClick = { pickVcfLauncher.launch(arrayOf("text/vcard", "text/x-vcard", "text/directory")) }
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "Pick VCF File")
-                }
-            }
-        },
-        bottomBar = {
-            if (selectionMode) {
-                Button(
-                    onClick = {
-                        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-                        exportVcfLauncher.launch("contacts_$timestamp.vcf")
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(64.dp),
-                    shape = RectangleShape,
-                    contentPadding = PaddingValues(0.dp)
-                ) {
-                    Text("Export VCF")
-                }
-            }
-        }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp)
-                .fillMaxSize()
-        ) {
-            if (contacts.isNotEmpty()) {
-                TabRow(selectedTabIndex = selectedTabIndex) {
-                    Tab(
-                        selected = selectedTabIndex == 0,
-                        onClick = { selectedTabIndex = 0 },
-                        text = { Text("People (${personContacts.size})") }
-                    )
-                    Tab(
-                        selected = selectedTabIndex == 1,
-                        onClick = { selectedTabIndex = 1 },
-                        text = { Text("Others (${otherContacts.size})") }
-                    )
-                }
-
-                LazyColumn(
-                    modifier = Modifier.weight(1f)
-                ) {
-                    items(displayList) { contact ->
-                        ContactItem(
-                            contact = contact,
-                            isSelected = selectedContacts.contains(contact),
-                            selectionMode = selectionMode,
-                            onToggle = {
-                                if (selectedContacts.contains(contact)) {
-                                    selectedContacts = selectedContacts - contact
-                                } else {
-                                    selectedContacts = selectedContacts + contact
-                                }
-                            },
-                            onLongClick = {
-                                if (!selectionMode) {
-                                    selectedContacts = selectedContacts + contact
-                                }
-                            }
-                        )
+            },
+            floatingActionButton = {
+                if (contacts.isEmpty()) {
+                    FloatingActionButton(
+                        onClick = { pickVcfLauncher.launch(arrayOf("text/vcard", "text/x-vcard", "text/directory")) }
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Pick VCF File")
                     }
                 }
-            } else if (vcfContent.isNotEmpty()) {
-                // Show raw content if parsing didn't find contacts or if it's an error message
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    Text(text = vcfContent)
+            },
+            bottomBar = {
+                if (selectionMode) {
+                    Button(
+                        onClick = {
+                            val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+                            exportVcfLauncher.launch("contacts_$timestamp.vcf")
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(64.dp),
+                        shape = RectangleShape,
+                        contentPadding = PaddingValues(0.dp)
+                    ) {
+                        Text("Export VCF")
+                    }
                 }
-                // Add a button to reset if there's an error/raw content but no contacts
-                Button(onClick = { 
-                    vcfContent = ""
-                    fileName = null
-                }, modifier = Modifier.padding(top = 8.dp)) {
-                    Text("Back")
-                }
-            } else {
-                // Initial empty state message
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Tap the + button to load a VCF file",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
-                    )
+            }
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .padding(horizontal = 16.dp)
+                    .fillMaxSize()
+            ) {
+                if (contacts.isNotEmpty()) {
+                    TabRow(selectedTabIndex = selectedTabIndex) {
+                        Tab(
+                            selected = selectedTabIndex == 0,
+                            onClick = { selectedTabIndex = 0 },
+                            text = { Text("People (${personContacts.size})") }
+                        )
+                        Tab(
+                            selected = selectedTabIndex == 1,
+                            onClick = { selectedTabIndex = 1 },
+                            text = { Text("Others (${otherContacts.size})") }
+                        )
+                    }
+
+                    LazyColumn(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        items(displayList) { contact ->
+                            ContactItem(
+                                contact = contact,
+                                isSelected = selectedContacts.contains(contact),
+                                selectionMode = selectionMode,
+                                onToggle = {
+                                    if (selectedContacts.contains(contact)) {
+                                        selectedContacts = selectedContacts - contact
+                                    } else {
+                                        selectedContacts = selectedContacts + contact
+                                    }
+                                },
+                                onLongClick = {
+                                    if (!selectionMode) {
+                                        selectedContacts = selectedContacts + contact
+                                    }
+                                }
+                            )
+                        }
+                    }
+                } else if (vcfContent.isNotEmpty()) {
+                    // Show raw content if parsing didn't find contacts or if it's an error message
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        Text(text = vcfContent)
+                    }
+                    // Add a button to reset if there's an error/raw content but no contacts
+                    Button(onClick = {
+                        vcfContent = ""
+                        fileName = null
+                    }, modifier = Modifier.padding(top = 8.dp)) {
+                        Text("Back")
+                    }
+                } else {
+                    // Initial empty state message
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Tap the + button to load a VCF file",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             }
         }
