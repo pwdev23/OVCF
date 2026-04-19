@@ -1,6 +1,9 @@
 package site.irhas.ovcf
 
 import android.app.Activity
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -29,33 +32,42 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.rememberDrawerState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -99,12 +111,13 @@ class MainActivity : ComponentActivity() {
 data class Contact(
     val name: String,
     val phone: String,
-    val email: String
+    val email: String,
+    val organization: String = "",
+    val note: String = ""
 )
 
 fun parseVcf(content: String): List<Contact> {
     val contacts = mutableListOf<Contact>()
-    // Split the file into individual vCard blocks
     val vcardBlocks = content.split("BEGIN:VCARD")
 
     for (block in vcardBlocks) {
@@ -113,23 +126,28 @@ fun parseVcf(content: String): List<Contact> {
         var fullName = ""
         var phone = ""
         var email = ""
+        var organization = ""
+        var note = ""
 
         block.lines().forEach { line ->
             val trimmedLine = line.trim()
             when {
-                // Extract Full Name (FN)
                 trimmedLine.startsWith("FN:", ignoreCase = true) || trimmedLine.startsWith("FN;", ignoreCase = true) -> {
                     fullName = trimmedLine.substringAfter(":").trim()
                 }
-                // Extract Phone (TEL)
                 trimmedLine.startsWith("TEL", ignoreCase = true) -> {
                     val value = trimmedLine.substringAfter(":", "").trim()
                     if (value.isNotEmpty()) phone = value
                 }
-                // Extract Email
                 trimmedLine.startsWith("EMAIL", ignoreCase = true) -> {
                     val value = trimmedLine.substringAfter(":", "").trim()
                     if (value.isNotEmpty()) email = value
+                }
+                trimmedLine.startsWith("ORG", ignoreCase = true) -> {
+                    organization = trimmedLine.substringAfter(":").trim().replace(";", " ")
+                }
+                trimmedLine.startsWith("NOTE", ignoreCase = true) -> {
+                    note = trimmedLine.substringAfter(":").trim()
                 }
             }
         }
@@ -139,7 +157,9 @@ fun parseVcf(content: String): List<Contact> {
                 Contact(
                     name = fullName.ifEmpty { "No Name" },
                     phone = phone.ifEmpty { "No Phone" },
-                    email = email
+                    email = email,
+                    organization = organization,
+                    note = note
                 )
             )
         }
@@ -157,6 +177,12 @@ fun contactsToVcf(contacts: List<Contact>): String {
             if (contact.email.isNotEmpty()) {
                 appendLine("EMAIL:${contact.email}")
             }
+            if (contact.organization.isNotEmpty()) {
+                appendLine("ORG:${contact.organization}")
+            }
+            if (contact.note.isNotEmpty()) {
+                appendLine("NOTE:${contact.note}")
+            }
             appendLine("END:VCARD")
         }
     }
@@ -169,14 +195,15 @@ fun ContactItem(
     isSelected: Boolean,
     selectionMode: Boolean,
     onToggle: () -> Unit,
-    onLongClick: () -> Unit
+    onLongClick: () -> Unit,
+    onClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
             .combinedClickable(
-                onClick = { if (selectionMode) onToggle() },
+                onClick = onClick,
                 onLongClick = onLongClick
             ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -218,6 +245,9 @@ fun VcfEditorApp(initialUri: Uri? = null) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     var showResetDialog by remember { mutableStateOf(false) }
     var selectedContacts by remember { mutableStateOf(setOf<Contact>()) }
+    var selectedContactForDetails by remember { mutableStateOf<Contact?>(null) }
+    val sheetState = rememberModalBottomSheetState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     val selectionMode by remember {
         derivedStateOf { selectedContacts.isNotEmpty() }
@@ -227,7 +257,6 @@ fun VcfEditorApp(initialUri: Uri? = null) {
         derivedStateOf {
             contacts.filter { contact ->
                 val digitsOnly = contact.phone.filter { it.isDigit() }
-                // Heuristic: Person contacts usually have 7+ digits or an email
                 digitsOnly.length >= 7 || contact.email.isNotEmpty()
             }
         }
@@ -237,7 +266,6 @@ fun VcfEditorApp(initialUri: Uri? = null) {
         derivedStateOf {
             contacts.filter { contact ->
                 val digitsOnly = contact.phone.filter { it.isDigit() }
-                // Heuristic: Non-person/short numbers have fewer than 7 digits and no email
                 (digitsOnly.isNotEmpty() && digitsOnly.length < 7 && contact.email.isEmpty()) ||
                         (digitsOnly.isEmpty() && contact.email.isEmpty())
             }
@@ -259,11 +287,9 @@ fun VcfEditorApp(initialUri: Uri? = null) {
         val window = (context as? Activity)?.window ?: return@LaunchedEffect
         val controller = WindowCompat.getInsetsController(window, view)
         if (selectionMode) {
-            // Enter immersive mode to hide navigation bar (and its indicator)
             controller.hide(WindowInsetsCompat.Type.navigationBars())
             controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         } else {
-            // Show navigation bar again when selection is cleared
             controller.show(WindowInsetsCompat.Type.navigationBars())
         }
     }
@@ -313,10 +339,8 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                     val toExport = if (selectedContacts.isNotEmpty()) selectedContacts.toList() else contacts
                     outputStream.write(contactsToVcf(toExport).toByteArray())
                 }
-                // Clear selection after successful export
                 selectedContacts = emptySet()
             } catch (e: Exception) {
-                // In a real app, show a toast or snackbar
             }
         }
     }
@@ -369,7 +393,7 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                             .height(200.dp)
                             .background(MaterialTheme.colorScheme.surfaceVariant)
                     )
-                    
+
                     NavigationDrawerItem(
                         label = { Text("Privacy policy") },
                         selected = false,
@@ -387,9 +411,9 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                         },
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                     )
-                    
+
                     Spacer(modifier = Modifier.weight(1f))
-                    
+
                     Text(
                         text = "Version $appVersion",
                         modifier = Modifier
@@ -405,6 +429,7 @@ fun VcfEditorApp(initialUri: Uri? = null) {
     ) {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
+            snackbarHost = { SnackbarHost(snackbarHostState) },
             topBar = {
                 TopAppBar(
                     title = {
@@ -532,12 +557,22 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                                     if (!selectionMode) {
                                         selectedContacts = selectedContacts + contact
                                     }
+                                },
+                                onClick = {
+                                    if (selectionMode) {
+                                        if (selectedContacts.contains(contact)) {
+                                            selectedContacts = selectedContacts - contact
+                                        } else {
+                                            selectedContacts = selectedContacts + contact
+                                        }
+                                    } else if (selectedTabIndex == 0) {
+                                        selectedContactForDetails = contact
+                                    }
                                 }
                             )
                         }
                     }
                 } else if (vcfContent.isNotEmpty()) {
-                    // Show raw content if parsing didn't find contacts or if it's an error message
                     Column(
                         modifier = Modifier
                             .weight(1f)
@@ -545,7 +580,6 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                     ) {
                         Text(text = vcfContent)
                     }
-                    // Add a button to reset if there's an error/raw content but no contacts
                     Button(onClick = {
                         vcfContent = ""
                         fileName = null
@@ -553,7 +587,6 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                         Text("Back")
                     }
                 } else {
-                    // Initial empty state message
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
@@ -565,6 +598,75 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                             textAlign = TextAlign.Center
                         )
                     }
+                }
+            }
+        }
+    }
+
+    if (selectedContactForDetails != null) {
+        val contact = selectedContactForDetails!!
+        ModalBottomSheet(
+            onDismissRequest = { selectedContactForDetails = null },
+            sheetState = sheetState
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .padding(bottom = 32.dp)
+            ) {
+                Text(
+                    text = "Contact Details",
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                ListItem(
+                    headlineContent = { Text(contact.name) },
+                    overlineContent = { Text("Name") },
+                    leadingContent = { Icon(Icons.Default.Person, contentDescription = null) }
+                )
+
+                ListItem(
+                    headlineContent = { Text(contact.phone) },
+                    overlineContent = { Text("Phone") },
+                    leadingContent = { Icon(Icons.Default.Phone, contentDescription = null) },
+                    trailingContent = {
+                        IconButton(onClick = {
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            val clip = ClipData.newPlainText("phone", contact.phone)
+                            clipboard.setPrimaryClip(clip)
+                            scope.launch {
+                                snackbarHostState.showSnackbar("Phone number copied to clipboard")
+                            }
+                        }) {
+                            Icon(Icons.Default.ContentCopy, contentDescription = "Copy phone")
+                        }
+                    }
+                )
+
+                if (contact.email.isNotEmpty()) {
+                    ListItem(
+                        headlineContent = { Text(contact.email) },
+                        overlineContent = { Text("Email") },
+                        leadingContent = { Icon(Icons.Default.Email, contentDescription = null) }
+                    )
+                }
+
+                if (contact.organization.isNotEmpty()) {
+                    ListItem(
+                        headlineContent = { Text(contact.organization) },
+                        overlineContent = { Text("Organization") },
+                        leadingContent = { Icon(Icons.Default.Work, contentDescription = null) }
+                    )
+                }
+
+                if (contact.note.isNotEmpty()) {
+                    ListItem(
+                        headlineContent = { Text(contact.note) },
+                        overlineContent = { Text("Note") },
+                        leadingContent = { Icon(Icons.AutoMirrored.Filled.Notes, contentDescription = null) }
+                    )
                 }
             }
         }
