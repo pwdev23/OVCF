@@ -7,9 +7,12 @@ out/
 .gradle/
 .externalNativeBuild/
 .cxx/
+/gradlew
+/gradlew.bat
 
 # Local configuration
 local.properties
+key.properties
 
 # IDE (Android Studio / IntelliJ)
 .idea/
