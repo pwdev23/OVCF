@@ -58,11 +58,11 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -95,6 +95,7 @@ import java.io.InputStreamReader
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.core.net.toUri
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -132,20 +133,27 @@ fun parseVcf(content: String): List<Contact> {
         block.lines().forEach { line ->
             val trimmedLine = line.trim()
             when {
-                trimmedLine.startsWith("FN:", ignoreCase = true) || trimmedLine.startsWith("FN;", ignoreCase = true) -> {
+                trimmedLine.startsWith("FN:", ignoreCase = true) || trimmedLine.startsWith(
+                    "FN;",
+                    ignoreCase = true
+                ) -> {
                     fullName = trimmedLine.substringAfter(":").trim()
                 }
+
                 trimmedLine.startsWith("TEL", ignoreCase = true) -> {
                     val value = trimmedLine.substringAfter(":", "").trim()
                     if (value.isNotEmpty()) phone = value
                 }
+
                 trimmedLine.startsWith("EMAIL", ignoreCase = true) -> {
                     val value = trimmedLine.substringAfter(":", "").trim()
                     if (value.isNotEmpty()) email = value
                 }
+
                 trimmedLine.startsWith("ORG", ignoreCase = true) -> {
                     organization = trimmedLine.substringAfter(":").trim().replace(";", " ")
                 }
+
                 trimmedLine.startsWith("NOTE", ignoreCase = true) -> {
                     note = trimmedLine.substringAfter(":").trim()
                 }
@@ -288,7 +296,8 @@ fun VcfEditorApp(initialUri: Uri? = null) {
         val controller = WindowCompat.getInsetsController(window, view)
         if (selectionMode) {
             controller.hide(WindowInsetsCompat.Type.navigationBars())
-            controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            controller.systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         } else {
             controller.show(WindowInsetsCompat.Type.navigationBars())
         }
@@ -336,7 +345,8 @@ fun VcfEditorApp(initialUri: Uri? = null) {
         uri?.let {
             try {
                 context.contentResolver.openOutputStream(it)?.use { outputStream ->
-                    val toExport = if (selectedContacts.isNotEmpty()) selectedContacts.toList() else contacts
+                    val toExport =
+                        if (selectedContacts.isNotEmpty()) selectedContacts.toList() else contacts
                     outputStream.write(contactsToVcf(toExport).toByteArray())
                 }
                 selectedContacts = emptySet()
@@ -398,7 +408,10 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                         label = { Text("Privacy policy") },
                         selected = false,
                         onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://irhas.site/app/ovfc#privacy"))
+                            val intent = Intent(
+                                Intent.ACTION_VIEW,
+                                "https://irhas.site/app/ovfc#privacy".toUri()
+                            )
                             context.startActivity(intent)
                             scope.launch { drawerState.close() }
                         },
@@ -494,7 +507,15 @@ fun VcfEditorApp(initialUri: Uri? = null) {
             floatingActionButton = {
                 if (contacts.isEmpty()) {
                     FloatingActionButton(
-                        onClick = { pickVcfLauncher.launch(arrayOf("text/vcard", "text/x-vcard", "text/directory")) }
+                        onClick = {
+                            pickVcfLauncher.launch(
+                                arrayOf(
+                                    "text/vcard",
+                                    "text/x-vcard",
+                                    "text/directory"
+                                )
+                            )
+                        }
                     ) {
                         Icon(Icons.Default.Add, contentDescription = "Pick VCF File")
                     }
@@ -504,7 +525,10 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                 if (selectionMode) {
                     Button(
                         onClick = {
-                            val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+                            val timestamp = SimpleDateFormat(
+                                "yyyyMMdd_HHmmss",
+                                Locale.getDefault()
+                            ).format(Date())
                             exportVcfLauncher.launch("contacts_$timestamp.vcf")
                         },
                         modifier = Modifier
@@ -525,7 +549,7 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                     .fillMaxSize()
             ) {
                 if (contacts.isNotEmpty()) {
-                    TabRow(selectedTabIndex = selectedTabIndex) {
+                    PrimaryTabRow(selectedTabIndex = selectedTabIndex) {
                         Tab(
                             selected = selectedTabIndex == 0,
                             onClick = { selectedTabIndex = 0 },
@@ -547,10 +571,10 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                                 isSelected = selectedContacts.contains(contact),
                                 selectionMode = selectionMode,
                                 onToggle = {
-                                    if (selectedContacts.contains(contact)) {
-                                        selectedContacts = selectedContacts - contact
+                                    selectedContacts = if (selectedContacts.contains(contact)) {
+                                        selectedContacts - contact
                                     } else {
-                                        selectedContacts = selectedContacts + contact
+                                        selectedContacts + contact
                                     }
                                 },
                                 onLongClick = {
@@ -560,10 +584,10 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                                 },
                                 onClick = {
                                     if (selectionMode) {
-                                        if (selectedContacts.contains(contact)) {
-                                            selectedContacts = selectedContacts - contact
+                                        selectedContacts = if (selectedContacts.contains(contact)) {
+                                            selectedContacts - contact
                                         } else {
-                                            selectedContacts = selectedContacts + contact
+                                            selectedContacts + contact
                                         }
                                     } else if (selectedTabIndex == 0) {
                                         selectedContactForDetails = contact
@@ -633,7 +657,8 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                     leadingContent = { Icon(Icons.Default.Phone, contentDescription = null) },
                     trailingContent = {
                         IconButton(onClick = {
-                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            val clipboard =
+                                context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                             val clip = ClipData.newPlainText("phone", contact.phone)
                             clipboard.setPrimaryClip(clip)
                             scope.launch {
@@ -665,7 +690,12 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                     ListItem(
                         headlineContent = { Text(contact.note) },
                         overlineContent = { Text("Note") },
-                        leadingContent = { Icon(Icons.AutoMirrored.Filled.Notes, contentDescription = null) }
+                        leadingContent = {
+                            Icon(
+                                Icons.AutoMirrored.Filled.Notes,
+                                contentDescription = null
+                            )
+                        }
                     )
                 }
             }
