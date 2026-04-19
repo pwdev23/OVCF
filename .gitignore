@@ -9,6 +9,7 @@ out/
 .cxx/
 /gradlew
 /gradlew.bat
+gradle-wrapper.jar
 
 # Local configuration
 local.properties
