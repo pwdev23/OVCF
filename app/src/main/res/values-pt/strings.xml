@@ -1,0 +1,26 @@
+<resources>
+    <string name="app_name">OVCF</string>
+    <string name="back">Voltar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="contact_details">Detalhes do contato</string>
+    <string name="contacts">%d contatos</string>
+    <string name="confirm_reset">Confirmar redefinição</string>
+    <string name="confirm_reset_message">Tem certeza de que deseja limpar o arquivo VCF atual? Isso o levará de volta ao início.</string>
+    <string name="email">Email</string>
+    <string name="error_reading_file">Erro ao ler o arquivo</string>
+    <string name="export_vcf">Exportar VCF</string>
+    <string name="home_message">Toque no botão + para carregar um arquivo VCF</string>
+    <string name="menu">Menu</string>
+    <string name="name">Nome</string>
+    <string name="note">Nota</string>
+    <string name="organization">Organização</string>
+    <string name="others">Outros (%d)</string>
+    <string name="people">Pessoas (%d)</string>
+    <string name="phone">Telefone</string>
+    <string name="pick_vcf_file">Selecionar arquivo VCF</string>
+    <string name="privacy_policy">Política de privacidade</string>
+    <string name="reset">Redefinir</string>
+    <string name="select_all">Selecionar tudo</string>
+    <string name="selected_contacts">%d selecionados</string>
+    <string name="version">Versão</string>
+</resources>

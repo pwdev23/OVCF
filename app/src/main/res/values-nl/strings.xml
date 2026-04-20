@@ -1,0 +1,26 @@
+<resources>
+    <string name="app_name">OVCF</string>
+    <string name="back">Terug</string>
+    <string name="cancel">Annuleren</string>
+    <string name="contact_details">Contactgegevens</string>
+    <string name="contacts">%d contacten</string>
+    <string name="confirm_reset">Reset bevestigen</string>
+    <string name="confirm_reset_message">Weet je zeker dat je het huidige VCF-bestand wilt wissen? Je keert terug naar het begin.</string>
+    <string name="email">E-mail</string>
+    <string name="error_reading_file">Fout bij lezen van bestand</string>
+    <string name="export_vcf">VCF exporteren</string>
+    <string name="home_message">Tik op de + knop om een VCF-bestand te laden</string>
+    <string name="menu">Menu</string>
+    <string name="name">Naam</string>
+    <string name="note">Notitie</string>
+    <string name="organization">Organisatie</string>
+    <string name="others">Overige (%d)</string>
+    <string name="people">Personen (%d)</string>
+    <string name="phone">Telefoon</string>
+    <string name="pick_vcf_file">VCF-bestand kiezen</string>
+    <string name="privacy_policy">Privacybeleid</string>
+    <string name="reset">Resetten</string>
+    <string name="select_all">Alles selecteren</string>
+    <string name="selected_contacts">%d geselecteerd</string>
+    <string name="version">Versie</string>
+</resources>

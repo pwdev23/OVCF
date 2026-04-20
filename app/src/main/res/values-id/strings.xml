@@ -1,0 +1,26 @@
+<resources>
+    <string name="app_name">OVCF</string>
+    <string name="back">Kembali</string>
+    <string name="cancel">Batal</string>
+    <string name="contact_details">Detail kontak</string>
+    <string name="contacts">%d kontak</string>
+    <string name="confirm_reset">Konfirmasi reset</string>
+    <string name="confirm_reset_message">Apakah Anda yakin ingin menghapus file VCF saat ini? Ini akan mengembalikan Anda ke awal.</string>
+    <string name="email">Email</string>
+    <string name="error_reading_file">Kesalahan membaca file</string>
+    <string name="export_vcf">Ekspor VCF</string>
+    <string name="home_message">Ketuk tombol + untuk memuat file VCF</string>
+    <string name="menu">Menu</string>
+    <string name="name">Nama</string>
+    <string name="note">Catatan</string>
+    <string name="organization">Organisasi</string>
+    <string name="others">Lainnya (%d)</string>
+    <string name="people">Orang (%d)</string>
+    <string name="phone">Telepon</string>
+    <string name="pick_vcf_file">Pilih file VCF</string>
+    <string name="privacy_policy">Kebijakan privasi</string>
+    <string name="reset">Reset</string>
+    <string name="select_all">Pilih semua</string>
+    <string name="selected_contacts">%d dipilih</string>
+    <string name="version">Versi</string>
+</resources>

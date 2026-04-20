@@ -1,0 +1,26 @@
+<resources>
+    <string name="app_name">OVCF</string>
+    <string name="back">Geri</string>
+    <string name="cancel">İptal</string>
+    <string name="contact_details">Kişi detayları</string>
+    <string name="contacts">%d kişi</string>
+    <string name="confirm_reset">Sıfırlamayı onayla</string>
+    <string name="confirm_reset_message">Mevcut VCF dosyasını temizlemek istediğinizden emin misiniz? Bu sizi başlangıca döndürecektir.</string>
+    <string name="email">E-posta</string>
+    <string name="error_reading_file">Dosya okunurken hata oluştu</string>
+    <string name="export_vcf">VCF dışa aktar</string>
+    <string name="home_message">Bir VCF dosyası yüklemek için + düğmesine dokunun</string>
+    <string name="menu">Menü</string>
+    <string name="name">Ad</string>
+    <string name="note">Not</string>
+    <string name="organization">Kuruluş</string>
+    <string name="others">Diğer (%d)</string>
+    <string name="people">Kişiler (%d)</string>
+    <string name="phone">Telefon</string>
+    <string name="pick_vcf_file">VCF dosyası seç</string>
+    <string name="privacy_policy">Gizlilik politikası</string>
+    <string name="reset">Sıfırla</string>
+    <string name="select_all">Tümünü seç</string>
+    <string name="selected_contacts">%d seçildi</string>
+    <string name="version">Sürüm</string>
+</resources>
