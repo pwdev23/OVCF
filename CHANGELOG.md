@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.0.3
+
+* fix(i18n): correct error i18n by @mirhasalh in https://github.com/pwdev23/OVCF/pull/8
+
 ## 0.0.2
 
 * feat(drawer): add navigation drawer by @mirhasalh in https://github.com/pwdev23/OVCF/pull/1
