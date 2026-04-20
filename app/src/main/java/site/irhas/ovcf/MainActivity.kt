@@ -325,7 +325,7 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                 contacts = parseVcf(content)
             }
         } catch (e: Exception) {
-            vcfContent = "${R.string.error_reading_file}: ${e.message}"
+            vcfContent = "Error reading file): ${e.message}"
             contacts = emptyList()
         }
     }
@@ -411,7 +411,7 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                         onClick = {
                             val intent = Intent(
                                 Intent.ACTION_VIEW,
-                                "https://irhas.site/app/open-vfc#privacy".toUri()
+                                "https://irhas.site/app/open-vcf#privacy".toUri()
                             )
                             context.startActivity(intent)
                             scope.launch { drawerState.close() }
@@ -429,7 +429,7 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                     Spacer(modifier = Modifier.weight(1f))
 
                     Text(
-                        text = "${R.string.version} $appVersion",
+                        text = "${stringResource(R.string.version)} $appVersion",
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp),
@@ -509,7 +509,10 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                                 }
                             } else {
                                 IconButton(onClick = { showResetDialog = true }) {
-                                    Icon(Icons.Default.Refresh, contentDescription = "Reset")
+                                    Icon(
+                                        Icons.Default.Refresh,
+                                        contentDescription = stringResource(R.string.reset)
+                                    )
                                 }
                             }
                         }
