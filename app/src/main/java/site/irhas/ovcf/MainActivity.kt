@@ -96,6 +96,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import androidx.core.net.toUri
+import androidx.compose.ui.res.stringResource
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -324,7 +325,7 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                 contacts = parseVcf(content)
             }
         } catch (e: Exception) {
-            vcfContent = "Error reading file: ${e.message}"
+            vcfContent = "${R.string.error_reading_file}: ${e.message}"
             contacts = emptyList()
         }
     }
@@ -358,8 +359,8 @@ fun VcfEditorApp(initialUri: Uri? = null) {
     if (showResetDialog) {
         AlertDialog(
             onDismissRequest = { showResetDialog = false },
-            title = { Text("Confirm Reset") },
-            text = { Text("Are you sure you want to clear the current VCF file? This will return you to the start.") },
+            title = { Text(stringResource(R.string.confirm_reset)) },
+            text = { Text(stringResource(R.string.confirm_reset_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     vcfContent = ""
@@ -368,12 +369,12 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                     selectedTabIndex = 0
                     showResetDialog = false
                 }) {
-                    Text("Reset")
+                    Text(stringResource(R.string.reset))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showResetDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -405,12 +406,12 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                     )
 
                     NavigationDrawerItem(
-                        label = { Text("Privacy policy") },
+                        label = { Text(stringResource(R.string.privacy_policy)) },
                         selected = false,
                         onClick = {
                             val intent = Intent(
                                 Intent.ACTION_VIEW,
-                                "https://irhas.site/app/ovfc#privacy".toUri()
+                                "https://irhas.site/app/open-vfc#privacy".toUri()
                             )
                             context.startActivity(intent)
                             scope.launch { drawerState.close() }
@@ -428,7 +429,7 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                     Spacer(modifier = Modifier.weight(1f))
 
                     Text(
-                        text = "Version $appVersion",
+                        text = "${R.string.version} $appVersion",
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp),
@@ -448,11 +449,16 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                     title = {
                         if (contacts.isNotEmpty()) {
                             if (selectionMode) {
-                                Text(text = "${selectedContacts.size} Selected")
+                                Text(
+                                    stringResource(
+                                        R.string.selected_contacts,
+                                        selectedContacts.size
+                                    )
+                                )
                             } else {
                                 Column {
                                     Text(
-                                        text = "${contacts.size} Contacts",
+                                        stringResource(R.string.contacts, contacts.size),
                                         style = MaterialTheme.typography.titleMedium
                                     )
                                     fileName?.let {
@@ -467,13 +473,16 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                                 }
                             }
                         } else {
-                            Text("OVCF")
+                            Text(stringResource(R.string.app_name))
                         }
                     },
                     navigationIcon = {
                         if (contacts.isEmpty()) {
                             IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                Icon(Icons.Default.Menu, contentDescription = "Menu")
+                                Icon(
+                                    Icons.Default.Menu,
+                                    contentDescription = stringResource(R.string.menu)
+                                )
                             }
                         }
                     },
@@ -488,7 +497,10 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                                     }
                                 }) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Text("Select all", modifier = Modifier.padding(end = 8.dp))
+                                        Text(
+                                            stringResource(R.string.select_all),
+                                            modifier = Modifier.padding(end = 8.dp)
+                                        )
                                         Checkbox(
                                             checked = isAllSelected,
                                             onCheckedChange = null
@@ -517,7 +529,10 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                             )
                         }
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = "Pick VCF File")
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = stringResource(R.string.pick_vcf_file)
+                        )
                     }
                 }
             },
@@ -537,7 +552,7 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                         shape = RectangleShape,
                         contentPadding = PaddingValues(0.dp)
                     ) {
-                        Text("Export VCF")
+                        Text(stringResource(R.string.export_vcf))
                     }
                 }
             }
@@ -553,12 +568,12 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                         Tab(
                             selected = selectedTabIndex == 0,
                             onClick = { selectedTabIndex = 0 },
-                            text = { Text("People (${personContacts.size})") }
+                            text = { Text(stringResource(R.string.people, personContacts.size)) }
                         )
                         Tab(
                             selected = selectedTabIndex == 1,
                             onClick = { selectedTabIndex = 1 },
-                            text = { Text("Others (${otherContacts.size})") }
+                            text = { Text(stringResource(R.string.others, otherContacts.size)) }
                         )
                     }
 
@@ -608,7 +623,7 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                         vcfContent = ""
                         fileName = null
                     }, modifier = Modifier.padding(top = 8.dp)) {
-                        Text("Back")
+                        Text(stringResource(R.string.back))
                     }
                 } else {
                     Box(
@@ -616,7 +631,7 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Tap the + button to load a VCF file",
+                            text = stringResource(R.string.home_message),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
@@ -640,20 +655,20 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                     .padding(bottom = 32.dp)
             ) {
                 Text(
-                    text = "Contact Details",
+                    text = stringResource(R.string.contact_details),
                     style = MaterialTheme.typography.headlineSmall,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
 
                 ListItem(
                     headlineContent = { Text(contact.name) },
-                    overlineContent = { Text("Name") },
+                    overlineContent = { Text(stringResource(R.string.name)) },
                     leadingContent = { Icon(Icons.Default.Person, contentDescription = null) }
                 )
 
                 ListItem(
                     headlineContent = { Text(contact.phone) },
-                    overlineContent = { Text("Phone") },
+                    overlineContent = { Text(stringResource(R.string.phone)) },
                     leadingContent = { Icon(Icons.Default.Phone, contentDescription = null) },
                     trailingContent = {
                         IconButton(onClick = {
@@ -673,7 +688,7 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                 if (contact.email.isNotEmpty()) {
                     ListItem(
                         headlineContent = { Text(contact.email) },
-                        overlineContent = { Text("Email") },
+                        overlineContent = { Text(stringResource(R.string.email)) },
                         leadingContent = { Icon(Icons.Default.Email, contentDescription = null) }
                     )
                 }
@@ -681,7 +696,7 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                 if (contact.organization.isNotEmpty()) {
                     ListItem(
                         headlineContent = { Text(contact.organization) },
-                        overlineContent = { Text("Organization") },
+                        overlineContent = { Text(stringResource(R.string.organization)) },
                         leadingContent = { Icon(Icons.Default.Work, contentDescription = null) }
                     )
                 }
@@ -689,7 +704,7 @@ fun VcfEditorApp(initialUri: Uri? = null) {
                 if (contact.note.isNotEmpty()) {
                     ListItem(
                         headlineContent = { Text(contact.note) },
-                        overlineContent = { Text("Note") },
+                        overlineContent = { Text(stringResource(R.string.note)) },
                         leadingContent = {
                             Icon(
                                 Icons.AutoMirrored.Filled.Notes,
