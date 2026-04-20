@@ -5,7 +5,7 @@
     <string name="contact_details">Dettagli contatto</string>
     <string name="contacts">%d contatti</string>
     <string name="confirm_reset">Conferma ripristino</string>
-    <string name="confirm_reset_message">Sei sicuro di voler cancellare il file VCF corrente? Tornerai all'inizio.</string>
+    <string name="confirm_reset_message">Sei sicuro di voler cancellare il file VCF corrente? Tornerai all\'inizio.</string>
     <string name="email">Email</string>
     <string name="error_reading_file">Errore nella lettura del file</string>
     <string name="export_vcf">Esporta VCF</string>
