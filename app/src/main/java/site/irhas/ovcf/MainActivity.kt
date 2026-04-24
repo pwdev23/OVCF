@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -260,6 +261,10 @@ fun VcfEditorApp(initialUri: Uri? = null) {
 
     val selectionMode by remember {
         derivedStateOf { selectedContacts.isNotEmpty() }
+    }
+
+    BackHandler(enabled = selectionMode) {
+        selectedContacts = emptySet()
     }
 
     val personContacts by remember {
