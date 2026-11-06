@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.1.0
+
+* feat: implement BackHandler by @mirhasalh in https://github.com/pwdev23/OVCF/pull/10
+* Chore/refactor by @mirhasalh in https://github.com/pwdev23/OVCF/pull/11
+
 ## 0.0.3
 
 * fix(i18n): correct error i18n by @mirhasalh in https://github.com/pwdev23/OVCF/pull/8
